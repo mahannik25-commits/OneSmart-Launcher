@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>OneSmart Launcher — لانچر اندروید</title>
+    <!-- Default Persian Font: Vazirmatn -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --spring: cubic-bezier(0.22, 1, 0.36, 1);
+            --icon-radius: 32%;
+            --icon-size: 56px;
+            --glass-bg: rgba(20, 25, 38, 0.58);
+            --glass-border: rgba(255, 255, 255, 0.14);
+            --glass-text: #f8fafc;
+            --glass-sub: rgba(226, 232, 240, 0.72);
+            --panel-bg: rgba(15, 20, 32, 0.86);
+        }
+
+        body.light-theme {
+            --glass-bg: rgba(255, 255, 255, 0.64);
+            --glass-border: rgba(255, 255, 255, 0.58);
+            --glass-text: #0f172a;
+            --glass-sub: rgba(30, 41, 59, 0.74);
+            --panel-bg: rgba(241, 245, 249, 0.90);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        input, textarea {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at 20% 20%, #1e1b4b 0%, #090d16 55%, #02040a 100%);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--glass-text);
+        }
+
+        /* Flagship Phone Frame on Desktop / Fullscreen on Mobile */
+        #phone-shell {
+            position: relative;
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            background: #000;
+            transition: transform 0.3s var(--spring);
+        }
+
+        @media (min-width: 768px) {
+            #phone-shell {
+                width: 402px;
+                height: 844px;
+                max-height: 94vh;
+                border-radius: 48px;
+                box-shadow:
+                    0 0 0 8px #181c26,
+                    0 0 0 10px #2d3548,
+                    0 35px 90px rgba(0, 0, 0, 0.8);
+            }
+        }
+
+        /* Dynamic Wallpapers */
+        #wallpaper-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            transition: background 0.6s ease, filter 0.4s ease;
+        }
+
+        .wp-oneui {
+            background:
+                radial-gradient(circle at 80% 15%, rgba(56, 189, 248, 0.85) 0%, transparent 45%),
+                radial-gradient(circle at 15% 75%, rgba(168, 85, 247, 0.85) 0%, transparent 50%),
+                radial-gradient(circle at 50% 45%, rgba(37, 99, 235, 0.6) 0%, transparent 55%),
+                linear-gradient(160deg, #0f172a 0%, #1e1b4b 50%, #0b1120 100%);
+        }
+
+        .wp-aurora {
+            background:
+                radial-gradient(circle at 20% 20%, rgba(16, 185, 129, 0.78) 0%, transparent 48%),
+                radial-gradient(circle at 85% 35%, rgba(6, 182, 212, 0.7) 0%, transparent 45%),
+                radial-gradient(circle at 45% 88%, rgba(99, 102, 241, 0.75) 0%, transparent 52%),
+                linear-gradient(180deg, #022c22 0%, #0f172a 60%, #090d16 100%);
+        }
+
+        .wp-minimal {
+            background:
+                radial-gradient(circle at 50% 18%, rgba(71, 85, 105, 0.45) 0%, transparent 52%),
+                linear-gradient(180deg, #111827 0%, #090d16 65%, #030712 100%);
+        }
+
+        .wp-sunset {
+            background:
+                radial-gradient(circle at 75% 22%, rgba(251, 146, 60, 0.88) 0%, transparent 46%),
+                radial-gradient(circle at 20% 65%, rgba(236, 72, 153, 0.82) 0%, transparent 52%),
+                radial-gradient(circle at 55% 90%, rgba(124, 58, 237, 0.78) 0%, transparent 50%),
+                linear-gradient(165deg, #431407 0%, #500724 52%, #1e1b4b 100%);
+        }
+
+        .wp-cyber {
+            background:
+                radial-gradient(circle at 85% 20%, rgba(244, 63, 94, 0.82) 0%, transparent 42%),
+                radial-gradient(circle at 18% 40%, rgba(34, 211, 238, 0.78) 0%, transparent 46%),
+                radial-gradient(circle at 60% 85%, rgba(192, 38, 211, 0.72) 0%, transparent 48%),
+                linear-gradient(170deg, #090518 0%, #1a0b2e 55%, #050814 100%);
+        }
+
+        /* Brightness & Flashlight Overlays */
+        #brightness-overlay {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 90;
+            transition: opacity 0.1s linear;
+        }
+
+        #flashlight-glow {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 85;
+            opacity: 0;
+            box-shadow: inset 0 0 65px rgba(254, 249, 195, 0.85);
+            transition: opacity 0.25s ease;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            color: var(--glass-text);
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            color: var(--glass-text);
+        }
+
+        /* App Icon Squircle + Spring Press */
+        .app-icon-box {
+            width: var(--icon-size);
+            height: var(--icon-size);
+            border-radius: var(--icon-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+            transition: transform 0.28s var(--spring), border-radius 0.3s ease, width 0.25s ease, height 0.25s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .app-item:active .app-icon-box {
+            transform: scale(0.88);
+        }
+
+        @media (hover: hover) {
+            .app-item:hover .app-icon-box {
+                transform: translateY(-3px) scale(1.05);
+            }
+        }
+
+        /* Quick Settings Panel */
+        #quick-settings {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            transform: translateY(-102%);
+            transition: transform 0.42s var(--spring);
+            display: flex;
+            flex-direction: column;
+            padding: 46px 18px 24px;
+            overflow-y: auto;
+        }
+
+        #quick-settings.open {
+            transform: translateY(0);
+        }
+
+        .qs-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .qs-circle {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.22);
+            color: var(--glass-text);
+            transition: background 0.22s ease, transform 0.2s var(--spring), color 0.2s ease;
+        }
+
+        .qs-tile.active .qs-circle {
+            background: #3b82f6;
+            color: #fff;
+            box-shadow: 0 6px 18px rgba(59, 130, 246, 0.45);
+        }
+
+        .qs-tile:active .qs-circle {
+            transform: scale(0.9);
+        }
+
+        /* App Drawer */
+        #app-drawer {
+            position: absolute;
+            inset: 0;
+            z-index: 40;
+            transform: translateY(102%);
+            transition: transform 0.42s var(--spring);
+            display: flex;
+            flex-direction: column;
+            padding: 44px 16px 16px;
+        }
+
+        #app-drawer.open {
+            transform: translateY(0);
+        }
+
+        /* Mini-App Modal */
+        #mini-app-view {
+            position: absolute;
+            inset: 0;
+            z-index: 60;
+            opacity: 0;
+            transform: scale(0.86);
+            pointer-events: none;
+            transition: opacity 0.28s var(--spring), transform 0.34s var(--spring);
+            display: flex;
+            flex-direction: column;
+            background: #0b1120;
+            color: #f8fafc;
+        }
+
+        body.light-theme #mini-app-view {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+
+        #mini-app-view.open {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        /* Equalizer Animation for Music Widget */
+        @keyframes eqBar {
+            0%, 100% { height: 4px; }
+            50% { height: 16px; }
+        }
+
+        .eq-bar {
+            width: 3px;
+            border-radius: 99px;
+            background: #38bdf8;
+            height: 5px;
+        }
+
+        .playing .eq-bar:nth-child(1) { animation: eqBar 0.7s infinite ease-in-out; }
+        .playing .eq-bar:nth-child(2) { animation: eqBar 0.55s infinite ease-in-out 0.15s; }
+        .playing .eq-bar:nth-child(3) { animation: eqBar 0.8s infinite ease-in-out 0.3s; }
+
+        /* Custom Scrollbar Hide */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Brightness & Size Range Slider */
+        input[type="range"].oneui-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.3);
+            outline: none;
+        }
+
+        input[type="range"].oneui-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #3b82f6;
+            border: 3px solid #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            cursor: pointer;
+        }
+
+        /* Non-blocking Toast Message */
+        #launcher-toast {
+            position: absolute;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            z-index: 95;
+            max-width: 88%;
+            padding: 10px 16px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.94);
+            color: #f8fafc;
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.3s var(--spring);
+        }
+
+        #launcher-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+    <!-- Dedicated Style Tag for Dynamically Uploaded User Custom Font -->
+    <style id="custom-font-style"></style>
+</head>
+<body>
+
+<div id="phone-shell">
+    <!-- Dynamic Wallpaper -->
+    <div id="wallpaper-layer" class="wp-oneui"></div>
+
+    <!-- Brightness & Flashlight Overlays -->
+    <div id="brightness-overlay"></div>
+    <div id="flashlight-glow"></div>
+
+    <!-- Floating Toast Notification -->
+    <div id="launcher-toast" role="status" aria-live="polite"></div>
+
+    <!-- ================= STATUS BAR ================= -->
+    <header id="status-bar" class="absolute top-0 inset-x-0 z-30 h-11 px-5 flex items-center justify-between text-xs font-semibold text-white cursor-pointer" title="برای باز کردن پنل تنظیمات سریع لمس کنید یا به پایین بکشید">
+        <div class="flex items-center gap-2">
+            <span id="sb-time" class="tracking-wide font-bold">07:49</span>
+            <span id="sb-airplane-badge" class="hidden text-[11px] bg-white/20 px-1.5 py-0.5 rounded-full">✈️</span>
+            <span id="sb-silent-badge" class="hidden text-[11px] bg-white/20 px-1.5 py-0.5 rounded-full">🔇</span>
+        </div>
+        <!-- Camera Punch-Hole (Subtle) -->
+        <div class="hidden md:block w-3.5 h-3.5 rounded-full bg-black/80 ring-1 ring-white/10"></div>
+        <div class="flex items-center gap-2.5" dir="ltr">
+            <span id="sb-signal" class="text-[11px] font-bold tracking-tight">5G</span>
+            <svg id="sb-wifi" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+            <div class="flex items-center gap-1">
+                <span class="text-[11px]">92%</span>
+                <div class="w-5 h-2.5 rounded-[3px] border border-white/80 p-[1.5px] flex items-center">
+                    <div class="h-full bg-emerald-400 rounded-[1px]" style="width: 90%"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= HOME SCREEN ================= -->
+    <main id="home-screen" class="relative z-10 h-full flex flex-col justify-between pt-14 pb-4 px-5 transition-all duration-300">
+        <!-- Top Widgets Zone -->
+        <div class="flex flex-col gap-3.5">
+            <!-- Live Persian Clock & Weather Widget (Interactive) -->
+            <div id="weather-widget" class="glass rounded-3xl p-4 cursor-pointer active:scale-[0.98] transition-transform">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div id="home-clock" class="text-4xl font-extrabold tracking-tight leading-none">۰۷:۴۹</div>
+                        <div id="home-date" class="text-xs mt-1.5 opacity-80 font-medium">پنج‌شنبه، ۵ آذر ۱۴۰۵</div>
+                    </div>
+                    <div class="text-left flex flex-col items-end">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-2xl">🌤️</span>
+                            <span class="text-2xl font-bold">۱۴°</span>
+                        </div>
+                        <div class="text-xs opacity-80">تهران • نیمه‌ابری</div>
+                    </div>
+                </div>
+                <!-- Expandable 3-Day Forecast -->
+                <div id="weather-forecast" class="hidden mt-3 pt-3 border-t border-white/15 grid grid-cols-3 gap-2 text-center text-xs">
+                    <div class="bg-white/10 rounded-2xl py-2">
+                        <div class="opacity-75">جمعه</div>
+                        <div class="text-base my-0.5">☀️</div>
+                        <div class="font-bold">۱۶° / ۶°</div>
+                    </div>
+                    <div class="bg-white/10 rounded-2xl py-2">
+                        <div class="opacity-75">شنبه</div>
+                        <div class="text-base my-0.5">🌧️</div>
+                        <div class="font-bold">۱۱° / ۴°</div>
+                    </div>
+                    <div class="bg-white/10 rounded-2xl py-2">
+                        <div class="opacity-75">یکشنبه</div>
+                        <div class="text-base my-0.5">⛅</div>
+                        <div class="font-bold">۱۳° / ۵°</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Music Player Widget -->
+            <div id="music-widget" class="glass rounded-3xl px-4 py-3 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg">
+                        <div id="music-eq" class="flex items-end gap-0.5 h-4">
+                            <span class="eq-bar"></span>
+                            <span class="eq-bar"></span>
+                            <span class="eq-bar"></span>
+                        </div>
+                    </div>
+                    <div class="min-w-0">
+                        <div id="track-title" class="text-sm font-bold truncate">تقدیر — شادمهر عقیلی</div>
+                        <div id="track-sub" class="text-[11px] opacity-75 truncate">متوقف شده</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0" dir="ltr">
+                    <button id="btn-prev-track" class="w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center active:scale-90 transition" aria-label="قبلی">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                    </button>
+                    <button id="btn-play-pause" class="w-9 h-9 rounded-full bg-white text-slate-900 flex items-center justify-center shadow active:scale-90 transition" aria-label="پخش یا توقف">
+                        <svg id="icon-play" class="w-4 h-4 ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        <svg id="icon-pause" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+                    <button id="btn-next-track" class="w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center active:scale-90 transition" aria-label="بعدی">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom One-Handed Reachable Area -->
+        <div class="flex flex-col gap-4">
+            <!-- One UI Home App Grid (8 Key Apps) -->
+            <div id="home-apps-grid" class="grid grid-cols-4 gap-y-4 gap-x-2 justify-items-center">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Smart Launcher Bottom Search Pill -->
+            <button id="home-search-pill" class="glass w-full rounded-full py-2.5 px-4 flex items-center justify-between text-xs active:scale-[0.98] transition-transform">
+                <div class="flex items-center gap-2.5 opacity-85">
+                    <svg class="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <span>جستجوی برنامه‌ها و ابزارها...</span>
+                </div>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/15 font-semibold">کشیدن به بالا</span>
+            </button>
+
+            <!-- Glassmorphic Bottom Dock -->
+            <div id="home-dock" class="glass rounded-[28px] py-2.5 px-4 flex items-center justify-around">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Bottom Gesture Pill -->
+            <div class="flex justify-center pt-0.5">
+                <div class="w-28 h-1 rounded-full bg-white/45"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= ONE UI QUICK SETTINGS PANEL ================= -->
+    <section id="quick-settings" class="glass-panel no-scrollbar">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <div id="qs-time" class="text-2xl font-extrabold">۰۷:۴۹</div>
+                <div id="qs-date" class="text-xs opacity-70">پنج‌شنبه، ۵ آذر</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="qs-open-settings" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center active:scale-90 transition" title="تنظیمات لانچر">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                </button>
+                <button id="qs-close-btn" class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center active:scale-90 transition" aria-label="بستن">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="18 15 12 9 6 15"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Toggles Grid -->
+        <div class="rounded-3xl bg-white/10 p-4 grid grid-cols-3 gap-y-4 gap-x-2 mb-4">
+            <div class="qs-tile active" data-toggle="wifi">
+                <div class="qs-circle">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                </div>
+                <span class="text-[11px] font-medium">وای‌فای</span>
+            </div>
+            <div class="qs-tile active" data-toggle="bt">
+                <div class="qs-circle">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"/></svg>
+                </div>
+                <span class="text-[11px] font-medium">بلوتوث</span>
+            </div>
+            <div class="qs-tile active" data-toggle="dark">
+                <div class="qs-circle">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </div>
+                <span class="text-[11px] font-medium">حالت تیره</span>
+            </div>
+            <div class="qs-tile" data-toggle="flash">
+                <div class="qs-circle">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </div>
+                <span class="text-[11px] font-medium">چراغ‌قوه</span>
+            </div>
+            <div class="qs-tile" data-toggle="silent">
+                <div class="qs-circle">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+                </div>
+                <span class="text-[11px] font-medium">سکوت</span>
+            </div>
+            <div class="qs-tile" data-toggle="airplane">
+                <div class="qs-circle">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg>
+                </div>
+                <span class="text-[11px] font-medium">پرواز</span>
+            </div>
+        </div>
+
+        <!-- Brightness Slider -->
+        <div class="rounded-3xl bg-white/10 px-4 py-3.5 mb-4 flex items-center gap-3">
+            <svg class="w-5 h-5 shrink-0 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <input id="brightness-slider" type="range" min="25" max="100" value="100" class="oneui-slider" aria-label="تنظیم نور صفحه">
+        </div>
+
+        <!-- Notifications -->
+        <div class="flex items-center justify-between mb-2 px-1">
+            <span class="text-xs font-bold opacity-80">اعلان‌ها</span>
+            <button id="clear-all-notifs" class="text-[11px] text-sky-400 font-semibold">پاک کردن همه</button>
+        </div>
+        <div id="notif-list" class="flex flex-col gap-2.5">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
+    <!-- ================= SMART LAUNCHER APP DRAWER ================= -->
+    <section id="app-drawer" class="glass-panel">
+        <div class="flex items-center justify-between mb-3 px-1">
+            <h2 class="text-lg font-extrabold">برنامه‌ها</h2>
+            <button id="drawer-close-btn" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center active:scale-90 transition" aria-label="بستن کشو">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+        </div>
+
+        <!-- Scrollable App Grid -->
+        <div id="drawer-grid" class="flex-1 overflow-y-auto no-scrollbar grid grid-cols-4 auto-rows-max gap-y-5 gap-x-2 justify-items-center py-2">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Bottom One-Handed Controls (Smart Launcher Style) -->
+        <div class="pt-3 border-t border-white/10 flex flex-col gap-2.5">
+            <!-- Category Tabs -->
+            <div id="category-tabs" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+                <button class="cat-tab active px-3.5 py-1.5 rounded-full text-xs font-bold bg-sky-500 text-white shrink-0" data-cat="all">همه</button>
+                <button class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 shrink-0" data-cat="comm">ارتباطات</button>
+                <button class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 shrink-0" data-cat="media">رسانه</button>
+                <button class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 shrink-0" data-cat="tools">ابزارها</button>
+                <button class="cat-tab px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 shrink-0" data-cat="games">بازی</button>
+            </div>
+
+            <!-- Instant Search Input -->
+            <div class="relative">
+                <input id="drawer-search" type="text" placeholder="جستجوی سریع برنامه..." class="w-full rounded-full bg-white/15 border border-white/15 py-2.5 pr-10 pl-4 text-xs placeholder:text-current placeholder:opacity-60 outline-none focus:border-sky-400">
+                <svg class="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= MINI-APP CONTAINER ================= -->
+    <section id="mini-app-view">
+        <div class="pt-12 pb-3 px-5 flex items-center justify-between border-b border-current/10">
+            <div class="flex items-center gap-2.5">
+                <span id="mini-app-icon" class="w-7 h-7 rounded-lg flex items-center justify-center"></span>
+                <h3 id="mini-app-title" class="text-base font-extrabold">برنامه</h3>
+            </div>
+            <button id="mini-app-close" class="text-xs px-3 py-1.5 rounded-full bg-current/10 font-bold active:scale-95 transition">بستن</button>
+        </div>
+        <div id="mini-app-body" class="flex-1 overflow-y-auto no-scrollbar p-5">
+            <!-- Dynamic Mini-App Content -->
+        </div>
+        <!-- Bottom Gesture Pill to Return Home -->
+        <div id="mini-app-home-pill" class="py-3 flex justify-center cursor-pointer active:opacity-60">
+            <div class="w-32 h-1.5 rounded-full bg-current opacity-40"></div>
+        </div>
+    </section>
+
+    <!-- ================= LONG-PRESS PIN CONTEXT MENU ================= -->
+    <div id="app-context-menu" class="hidden absolute inset-0 z-70 bg-black/55 backdrop-blur-sm flex items-end justify-center p-4">
+        <div class="glass-panel w-full rounded-3xl p-4 border border-white/15 shadow-2xl flex flex-col gap-2.5">
+            <div class="flex items-center justify-between pb-2 border-b border-white/10">
+                <span id="ctx-app-name" class="text-sm font-extrabold truncate">برنامه</span>
+                <button id="ctx-close" class="text-xs opacity-70 px-2 py-1">بستن</button>
+            </div>
+            <button id="ctx-toggle-home" class="w-full py-2.5 px-4 rounded-2xl bg-white/10 text-xs font-bold text-right active:scale-95 transition">افزودن به صفحه اصلی</button>
+            <button id="ctx-toggle-dock" class="w-full py-2.5 px-4 rounded-2xl bg-white/10 text-xs font-bold text-right active:scale-95 transition">افزودن به نوار پایین (داک)</button>
+            <button id="ctx-open-app" class="w-full py-2.5 px-4 rounded-2xl bg-sky-500 text-white text-xs font-bold text-center active:scale-95 transition">اجرای برنامه</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    // =========================================================================
+    // 1. BUILT-IN MINI-APPS, DEMO CATALOG & NATIVE ANDROID BRIDGE
+    // =========================================================================
+    const BUILTIN_APPS = [
+        { id: 'builtin:calculator', name: 'ماشین‌حساب', cat: 'tools', builtin: 'calculator', grad: 'from-teal-400 to-emerald-600', svg: '<rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8.01" y2="10"/><line x1="12" y1="10" x2="12.01" y2="10"/><line x1="16" y1="10" x2="16.01" y2="10"/><line x1="8" y1="14" x2="8.01" y2="14"/><line x1="12" y1="14" x2="12.01" y2="14"/><line x1="16" y1="14" x2="16.01" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/>' },
+        { id: 'builtin:notes', name: 'یادداشت', cat: 'tools', builtin: 'notes', grad: 'from-amber-400 to-orange-500', svg: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>' },
+        { id: 'builtin:clock', name: 'ساعت', cat: 'tools', builtin: 'clock', grad: 'from-blue-500 to-indigo-600', svg: '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>' },
+        { id: 'builtin:settings', name: 'تنظیمات لانچر', cat: 'tools', builtin: 'settings', grad: 'from-slate-500 to-slate-700', svg: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' }
+    ];
+
+    const DEMO_APPS = [
+        { id: 'demo:phone', name: 'تلفن', cat: 'comm', grad: 'from-emerald-400 to-green-600', svg: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>' },
+        { id: 'demo:messages', name: 'پیام‌ها', cat: 'comm', grad: 'from-sky-400 to-blue-600', svg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
+        { id: 'demo:browser', name: 'کروم', cat: 'comm', grad: 'from-indigo-400 to-violet-600', svg: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>' },
+        { id: 'demo:camera', name: 'دوربین', cat: 'media', grad: 'from-rose-500 to-red-600', svg: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>' },
+        { id: 'demo:gallery', name: 'گالری', cat: 'media', grad: 'from-pink-500 to-rose-600', svg: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>' },
+        { id: 'demo:music', name: 'موسیقی', cat: 'media', grad: 'from-purple-500 to-fuchsia-600', svg: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>' },
+        { id: 'demo:telegram', name: 'تلگرام', cat: 'comm', grad: 'from-cyan-400 to-sky-600', svg: '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>' },
+        { id: 'demo:gamehub', name: 'گیم‌هاب', cat: 'games', grad: 'from-fuchsia-500 to-indigo-600', svg: '<rect x="2" y="6" width="20" height="12" rx="4"/><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><circle cx="15" cy="11" r="1"/><circle cx="17" cy="13" r="1"/>' },
+        { id: 'demo:youtube', name: 'یوتیوب', cat: 'media', grad: 'from-red-500 to-rose-700', svg: '<polygon points="5 3 19 12 5 21 5 3"/>' },
+        { id: 'demo:files', name: 'فایل‌ها', cat: 'tools', grad: 'from-yellow-400 to-amber-600', svg: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>' },
+        { id: 'demo:pubg', name: 'پابجی موبایل', cat: 'games', grad: 'from-orange-500 to-amber-700', svg: '<circle cx="12" cy="12" r="9"/><line x1="12" y1="3" x2="12" y2="7"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="3" y1="12" x2="7" y2="12"/><line x1="17" y1="12" x2="21" y2="12"/>' }
+    ];
+
+    const MONOGRAM_GRADS = [
+        'from-sky-500 to-blue-700',
+        'from-emerald-500 to-teal-700',
+        'from-violet-500 to-purple-700',
+        'from-rose-500 to-pink-700',
+        'from-amber-500 to-orange-700',
+        'from-cyan-500 to-indigo-700'
+    ];
+
+    const WALLPAPERS = [
+        { id: 'wp-oneui', name: 'امواج One UI', preview: 'linear-gradient(135deg,#38bdf8,#a855f7,#0f172a)' },
+        { id: 'wp-aurora', name: 'شفق Smart', preview: 'linear-gradient(135deg,#10b981,#06b6d4,#0f172a)' },
+        { id: 'wp-minimal', name: 'تاریک مینیمال', preview: 'linear-gradient(135deg,#334155,#0f172a,#020617)' },
+        { id: 'wp-sunset', name: 'غروب آفتاب', preview: 'linear-gradient(135deg,#fb923c,#ec4899,#4c1d95)' },
+        { id: 'wp-cyber', name: 'سایبرپانک', preview: 'linear-gradient(135deg,#f43f5e,#22d3ee,#1a0b2e)' }
+    ];
+
+    const TRACKS = [
+        { title: 'تقدیر — شادمهر عقیلی', artist: 'پخش‌کننده هوشمند' },
+        { title: 'Still D.R.E. — Dr. Dre', artist: 'هیپ‌هاپ کلاسیک' },
+        { title: 'موج شبانه — بی‌کلام سنتور', artist: 'تمرکز و طراحی' }
+    ];
+
+    let notifications = [
+        { id: 1, app: 'پیام‌ها', time: '۲ دقیقه پیش', text: 'جلسه بررسی پروژه ساعت ۱۰ صبح برگزار می‌شود.' },
+        { id: 2, app: 'OneSmart UI', time: '۱۵ دقیقه پیش', text: 'از بخش تنظیمات لانچر می‌توانید فونت دلخواه خود را وارد کنید.' },
+        { id: 3, app: 'آب‌وهوا', time: '۱ ساعت پیش', text: 'هوای تهران امروز نیمه‌ابری و خنک خواهد بود.' }
+    ];
+
+    // Safe localStorage helpers
+    function safeGet(key, fallback) {
+        try {
+            const v = localStorage.getItem(key);
+            return v !== null ? v : fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    function safeJSON(key, fallback) {
+        try {
+            const v = localStorage.getItem(key);
+            return v ? JSON.parse(v) : fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    const state = {
+        wallpaper: safeGet('onesmart_wp', 'wp-oneui'),
+        iconRadius: safeGet('onesmart_rad', '32%'),
+        iconSize: Number(safeGet('onesmart_size', '56')),
+        darkMode: safeGet('onesmart_dark', 'true') !== 'false',
+        customFontName: safeGet('onesmart_custom_font_name', ''),
+        customFontData: safeGet('onesmart_custom_font_data', ''),
+        activeCat: 'all',
+        trackIdx: 0,
+        isPlaying: false,
+        notes: safeJSON('onesmart_notes', ['بررسی ایده‌های طراحی جدید', 'تمرین باشگاه ساعت ۶ عصر']),
+        pinnedHome: safeJSON('onesmart_home', []),
+        pinnedDock: safeJSON('onesmart_dock', [])
+    };
+
+    let APPS = [];
+    let isNativeAndroid = false;
+    let swInterval = null;
+    let toastTimer = null;
+
+    const toFa = n => String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+
+    // Non-blocking Persian Toast Helper
+    function showToast(msg) {
+        const el = document.getElementById('launcher-toast');
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+    }
+
+    // =========================================================================
+    // 2. CUSTOM FONT MANAGER (DYNAMIC @font-face + LOCALSTORAGE)
+    // =========================================================================
+    function applyCustomFont(dataUrl, fileName) {
+        const styleEl = document.getElementById('custom-font-style');
+        if (!styleEl) return;
+
+        if (dataUrl) {
+            styleEl.textContent = `
+                @font-face {
+                    font-family: 'UserCustomFont';
+                    src: url('${dataUrl}');
+                    font-weight: 100 900;
+                    font-style: normal;
+                    font-display: swap;
+                }
+                body, button, input, textarea, select {
+                    font-family: 'UserCustomFont', 'Vazirmatn', system-ui, sans-serif !important;
+                }
+            `;
+            state.customFontData = dataUrl;
+            state.customFontName = fileName || 'فونت دلخواه';
+        } else {
+            styleEl.textContent = '';
+            state.customFontData = '';
+            state.customFontName = '';
+        }
+    }
+
+    function handleCustomFontUpload(file, onDone) {
+        if (!file) return;
+
+        const maxBytes = 3.5 * 1024 * 1024; // 3.5 MB
+        if (file.size > maxBytes) {
+            showToast('حجم فایل فونت بیش از ۳.۵ مگابایت است! لطفاً فونت سبک‌تری انتخاب کنید.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const dataUrl = ev.target.result;
+            applyCustomFont(dataUrl, file.name);
+
+            try {
+                localStorage.setItem('onesmart_custom_font_data', dataUrl);
+                localStorage.setItem('onesmart_custom_font_name', file.name);
+                showToast(`فونت «${file.name}» با موفقیت اعمال و ذخیره شد.`);
+            } catch (err) {
+                // QuotaExceededError fallback: font still works for current session
+                showToast('فونت اعمال شد، اما به‌دلیل حجم بالا در حافظه دائمی ذخیره نشد.');
+            }
+
+            if (typeof onDone === 'function') onDone();
+        };
+        reader.onerror = function() {
+            showToast('خطا در خواندن فایل فونت. لطفاً مجدداً تلاش کنید.');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function resetCustomFont(onDone) {
+        applyCustomFont('', '');
+        try {
+            localStorage.removeItem('onesmart_custom_font_data');
+            localStorage.removeItem('onesmart_custom_font_name');
+        } catch (e) {}
+        showToast('فونت به حالت پیش‌فرض (وزیرمتن) بازگشت.');
+        if (typeof onDone === 'function') onDone();
+    }
+
+    // =========================================================================
+    // 3. NATIVE ANDROID BRIDGE DETECTION & APP LOADING
+    // =========================================================================
+    function isAndroidBridgeAvailable() {
+        return typeof window.AndroidBridge !== 'undefined' &&
+               typeof window.AndroidBridge.getInstalledApps === 'function';
+    }
+
+    function categorizeRealApp(pkg, name) {
+        const text = `${pkg} ${name}`.toLowerCase();
+        if (/telegram|whatsapp|instagram|dialer|phone|telecom|contacts|sms|messaging|mms|chrome|browser|rubika|eitaa|bale|soroush|shad|gmail|mail|discord|twitter|x\.com/.test(text)) {
+            return 'comm';
+        }
+        if (/youtube|spotify|gallery|camera|video|music|netflix|photos|mxtech|vlc|media|sound|audio|soundcloud|aparat|filimo/.test(text)) {
+            return 'media';
+        }
+        if (/game|pubg|cod|clash|unity|tencent|supercell|ea\.|gameloft|minecraft|roblox|chess|play\.games|freefire/.test(text)) {
+            return 'games';
+        }
+        return 'tools';
+    }
+
+    function styleRealApp(pkg, name) {
+        const t = `${pkg} ${name}`.toLowerCase();
+        if (t.includes('telegram') || t.includes('org.telegram')) return { grad: 'from-cyan-400 to-sky-600', svg: '<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>' };
+        if (t.includes('whatsapp')) return { grad: 'from-emerald-400 to-green-600', svg: '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>' };
+        if (t.includes('instagram')) return { grad: 'from-pink-500 via-rose-500 to-amber-500', svg: '<rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>' };
+        if (t.includes('youtube')) return { grad: 'from-red-500 to-rose-700', svg: '<polygon points="5 3 19 12 5 21 5 3"/>' };
+        if (t.includes('chrome') || t.includes('browser')) return { grad: 'from-indigo-400 to-blue-600', svg: '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>' };
+        if (t.includes('camera')) return { grad: 'from-rose-500 to-red-600', svg: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>' };
+        if (t.includes('dialer') || t.includes('phone') || t.includes('telecom')) return { grad: 'from-emerald-400 to-green-600', svg: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>' };
+        if (t.includes('messaging') || t.includes('mms') || t.includes('sms')) return { grad: 'from-sky-400 to-blue-600', svg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' };
+        if (t.includes('gallery') || t.includes('photos')) return { grad: 'from-pink-500 to-rose-600', svg: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>' };
+        if (t.includes('maps')) return { grad: 'from-emerald-500 to-cyan-600', svg: '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>' };
+        if (t.includes('vending') || t.includes('play store')) return { grad: 'from-teal-400 to-sky-600', svg: '<polygon points="6 3 20 12 6 21 6 3"/>' };
+        if (t.includes('settings')) return { grad: 'from-slate-500 to-slate-700', svg: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.85 1 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' };
+
+        let hash = 0;
+        for (let i = 0; i < pkg.length; i++) hash = (hash * 31 + pkg.charCodeAt(i)) >>> 0;
+        const grad = MONOGRAM_GRADS[hash % MONOGRAM_GRADS.length];
+        const letter = (name || pkg).trim().charAt(0).toUpperCase();
+        return { grad, monogram: letter };
+    }
+
+    function savePins() {
+        try {
+            localStorage.setItem('onesmart_home', JSON.stringify(state.pinnedHome));
+            localStorage.setItem('onesmart_dock', JSON.stringify(state.pinnedDock));
+        } catch (e) {}
+    }
+
+    function loadApps() {
+        isNativeAndroid = isAndroidBridgeAvailable();
+        if (isNativeAndroid) {
+            try {
+                const raw = JSON.parse(window.AndroidBridge.getInstalledApps() || '[]');
+                const realApps = raw
+                    .filter(a => a && a.package && a.package !== 'com.onesmart.launcher')
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fa'))
+                    .map(a => {
+                        const style = styleRealApp(a.package, a.name || a.package);
+                        return {
+                            id: a.package,
+                            package: a.package,
+                            name: a.name || a.package,
+                            cat: categorizeRealApp(a.package, a.name || ''),
+                            grad: style.grad,
+                            svg: style.svg || null,
+                            monogram: style.monogram || null
+                        };
+                    });
+                APPS = [...BUILTIN_APPS, ...realApps];
+            } catch (e) {
+                isNativeAndroid = false;
+                APPS = [...BUILTIN_APPS, ...DEMO_APPS];
+            }
+        } else {
+            APPS = [...BUILTIN_APPS, ...DEMO_APPS];
+        }
+
+        // Validate saved pins against currently loaded apps
+        const validIds = new Set(APPS.map(a => a.id));
+        state.pinnedDock = state.pinnedDock.filter(id => validIds.has(id));
+        state.pinnedHome = state.pinnedHome.filter(id => validIds.has(id));
+
+        if (!state.pinnedDock.length) {
+            if (isNativeAndroid) {
+                const pick = regex => APPS.find(a => a.package && regex.test(`${a.package} ${a.name}`.toLowerCase()));
+                const defaults = [
+                    pick(/dialer|phone|telecom/),
+                    pick(/messaging|mms|sms|telegram|whatsapp/),
+                    pick(/chrome|browser/),
+                    pick(/camera/)
+                ].filter(Boolean).map(a => a.id);
+                state.pinnedDock = defaults.length ? defaults : APPS.slice(0, 4).map(a => a.id);
+            } else {
+                state.pinnedDock = ['demo:phone', 'demo:messages', 'demo:browser', 'demo:camera'];
+            }
+        }
+        if (!state.pinnedHome.length) {
+            state.pinnedHome = APPS.filter(a => !state.pinnedDock.includes(a.id)).slice(0, 8).map(a => a.id);
+        }
+    }
+
+    // =========================================================================
+    // 4. CLOCK & DATE UPDATER
+    // =========================================================================
+    function updateClock() {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const faTime = toFa(`${hh}:${mm}`);
+        document.getElementById('sb-time').textContent = `${hh}:${mm}`;
+        document.getElementById('home-clock').textContent = faTime;
+        document.getElementById('qs-time').textContent = faTime;
+
+        try {
+            const faDate = new Intl.DateTimeFormat('fa-IR', { weekday: 'long', day: 'numeric', month: 'long' }).format(now);
+            document.getElementById('home-date').textContent = faDate;
+            document.getElementById('qs-date').textContent = faDate;
+        } catch (e) {}
+
+        const liveClockEl = document.getElementById('mini-clock-live');
+        if (liveClockEl) {
+            const ss = String(now.getSeconds()).padStart(2, '0');
+            liveClockEl.textContent = toFa(`${hh}:${mm}:${ss}`);
+        }
+    }
+
+    // =========================================================================
+    // 5. RENDER APPS (HOME, DOCK, DRAWER) + LONG-PRESS PINNING
+    // =========================================================================
+    const ctxMenu = document.getElementById('app-context-menu');
+    let ctxTargetApp = null;
+
+    function openContextMenu(app) {
+        ctxTargetApp = app;
+        document.getElementById('ctx-app-name').textContent = app.name;
+        const inHome = state.pinnedHome.includes(app.id);
+        const inDock = state.pinnedDock.includes(app.id);
+        document.getElementById('ctx-toggle-home').textContent = inHome ? 'حذف از صفحه اصلی' : 'افزودن به صفحه اصلی';
+        document.getElementById('ctx-toggle-dock').textContent = inDock ? 'حذف از نوار پایین (داک)' : 'افزودن به نوار پایین (داک)';
+        ctxMenu.classList.remove('hidden');
+    }
+
+    document.getElementById('ctx-close').addEventListener('click', () => ctxMenu.classList.add('hidden'));
+    ctxMenu.addEventListener('click', e => { if (e.target === ctxMenu) ctxMenu.classList.add('hidden'); });
+    document.getElementById('ctx-open-app').addEventListener('click', () => {
+        ctxMenu.classList.add('hidden');
+        if (ctxTargetApp) launchOrOpenApp(ctxTargetApp);
+    });
+    document.getElementById('ctx-toggle-home').addEventListener('click', () => {
+        if (!ctxTargetApp) return;
+        const idx = state.pinnedHome.indexOf(ctxTargetApp.id);
+        if (idx >= 0) {
+            state.pinnedHome.splice(idx, 1);
+            showToast(`«${ctxTargetApp.name}» از صفحه اصلی حذف شد.`);
+        } else {
+            if (state.pinnedHome.length >= 8) state.pinnedHome.pop();
+            state.pinnedHome.push(ctxTargetApp.id);
+            showToast(`«${ctxTargetApp.name}» به صفحه اصلی اضافه شد.`);
+        }
+        savePins();
+        renderHomeAndDock();
+        ctxMenu.classList.add('hidden');
+    });
+    document.getElementById('ctx-toggle-dock').addEventListener('click', () => {
+        if (!ctxTargetApp) return;
+        const idx = state.pinnedDock.indexOf(ctxTargetApp.id);
+        if (idx >= 0) {
+            state.pinnedDock.splice(idx, 1);
+            showToast(`«${ctxTargetApp.name}» از داک حذف شد.`);
+        } else {
+            if (state.pinnedDock.length >= 4) state.pinnedDock.pop();
+            state.pinnedDock.push(ctxTargetApp.id);
+            showToast(`«${ctxTargetApp.name}» به داک اضافه شد.`);
+        }
+        savePins();
+        renderHomeAndDock();
+        ctxMenu.classList.add('hidden');
+    });
+
+    function launchOrOpenApp(app) {
+        if (app.package && isNativeAndroid && typeof window.AndroidBridge.launchApp === 'function') {
+            window.closeAllModals();
+            window.AndroidBridge.launchApp(app.package);
+            return;
+        }
+        openMiniApp(app);
+    }
+
+    function createAppNode(app, showLabel = true) {
+        const div = document.createElement('div');
+        div.className = 'app-item flex flex-col items-center gap-1.5 w-16 cursor-pointer';
+        const innerGraphic = app.svg
+            ? `<svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${app.svg}</svg>`
+            : `<span class="text-xl font-black tracking-tight">${app.monogram || '?'}</span>`;
+
+        div.innerHTML = `
+            <div class="app-icon-box bg-gradient-to-br ${app.grad} text-white">
+                ${innerGraphic}
+            </div>
+            ${showLabel ? `<span class="text-[11px] font-medium text-center leading-tight truncate w-full drop-shadow">${app.name}</span>` : ''}
+        `;
+
+        // Long-press detection (480ms) for pinning to Home / Dock
+        let pressTimer = null;
+        let longPressed = false;
+        const startPress = () => {
+            longPressed = false;
+            pressTimer = setTimeout(() => {
+                longPressed = true;
+                openContextMenu(app);
+            }, 480);
+        };
+        const cancelPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
+
+        div.addEventListener('touchstart', startPress, { passive: true });
+        div.addEventListener('touchend', cancelPress);
+        div.addEventListener('touchmove', cancelPress);
+        div.addEventListener('mousedown', startPress);
+        div.addEventListener('mouseup', cancelPress);
+        div.addEventListener('mouseleave', cancelPress);
+        div.addEventListener('contextmenu', e => { e.preventDefault(); openContextMenu(app); });
+        div.addEventListener('click', () => {
+            if (!longPressed) launchOrOpenApp(app);
+        });
+        return div;
+    }
+
+    function renderHomeAndDock() {
+        const homeGrid = document.getElementById('home-apps-grid');
+        const dock = document.getElementById('home-dock');
+        homeGrid.innerHTML = '';
+        dock.innerHTML = '';
+
+        const byId = id => APPS.find(a => a.id === id);
+        state.pinnedHome.map(byId).filter(Boolean).slice(0, 8).forEach(a => homeGrid.appendChild(createAppNode(a, true)));
+        state.pinnedDock.map(byId).filter(Boolean).slice(0, 4).forEach(a => dock.appendChild(createAppNode(a, false)));
+    }
+
+    function renderDrawer() {
+        const grid = document.getElementById('drawer-grid');
+        const q = document.getElementById('drawer-search').value.trim().toLowerCase();
+        grid.innerHTML = '';
+
+        const filtered = APPS.filter(a => {
+            const matchCat = state.activeCat === 'all' || a.cat === state.activeCat;
+            const matchQ = !q || a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q);
+            return matchCat && matchQ;
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div class="col-span-4 text-xs opacity-60 py-10">برنامه‌ای یافت نشد</div>';
+            return;
+        }
+        filtered.forEach(a => grid.appendChild(createAppNode(a, true)));
+    }
+
+    // =========================================================================
+    // 6. QUICK SETTINGS, DRAWER CONTROLS & GESTURES
+    // =========================================================================
+    const qsPanel = document.getElementById('quick-settings');
+    const drawerPanel = document.getElementById('app-drawer');
+    const miniAppView = document.getElementById('mini-app-view');
+    const miniAppBody = document.getElementById('mini-app-body');
+
+    function renderNotifications() {
+        const list = document.getElementById('notif-list');
+        if (notifications.length === 0) {
+            list.innerHTML = '<div class="text-center text-xs opacity-50 py-6">اعلان جدیدی وجود ندارد</div>';
+            return;
+        }
+        list.innerHTML = '';
+        notifications.forEach(n => {
+            const item = document.createElement('div');
+            item.className = 'rounded-2xl bg-white/10 p-3 flex items-start justify-between gap-2';
+            item.innerHTML = `
+                <div>
+                    <div class="flex items-center gap-2 text-xs font-bold">
+                        <span>${n.app}</span>
+                        <span class="text-[10px] opacity-60 font-normal">${n.time}</span>
+                    </div>
+                    <p class="text-xs opacity-85 mt-1 leading-relaxed">${n.text}</p>
+                </div>
+                <button class="text-xs opacity-60 hover:opacity-100 px-1.5 py-0.5" aria-label="حذف اعلان">✕</button>
+            `;
+            item.querySelector('button').addEventListener('click', () => {
+                notifications = notifications.filter(x => x.id !== n.id);
+                renderNotifications();
+            });
+            list.appendChild(item);
+        });
+    }
+
+    document.getElementById('clear-all-notifs').addEventListener('click', () => {
+        notifications = [];
+        renderNotifications();
+    });
+
+    // Quick Settings Toggles
+    document.querySelectorAll('.qs-tile').forEach(tile => {
+        tile.addEventListener('click', () => {
+            tile.classList.toggle('active');
+            const active = tile.classList.contains('active');
+            const type = tile.dataset.toggle;
+
+            if (type === 'wifi') {
+                document.getElementById('sb-wifi').style.opacity = active ? '1' : '0.25';
+            } else if (type === 'dark') {
+                state.darkMode = active;
+                try { localStorage.setItem('onesmart_dark', String(state.darkMode)); } catch (e) {}
+                document.body.classList.toggle('light-theme', !active);
+            } else if (type === 'flash') {
+                document.getElementById('flashlight-glow').style.opacity = active ? '1' : '0';
+            } else if (type === 'silent') {
+                document.getElementById('sb-silent-badge').classList.toggle('hidden', !active);
+            } else if (type === 'airplane') {
+                document.getElementById('sb-airplane-badge').classList.toggle('hidden', !active);
+                document.getElementById('sb-signal').style.opacity = active ? '0.25' : '1';
+            }
+        });
+    });
+
+    // Brightness Slider
+    document.getElementById('brightness-slider').addEventListener('input', e => {
+        const val = Number(e.target.value);
+        const dimOpacity = ((100 - val) / 100) * 0.72;
+        document.getElementById('brightness-overlay').style.opacity = dimOpacity.toFixed(2);
+    });
+
+    // Weather & Music Widgets
+    document.getElementById('weather-widget').addEventListener('click', () => {
+        document.getElementById('weather-forecast').classList.toggle('hidden');
+    });
+
+    function updateMusicUI() {
+        const t = TRACKS[state.trackIdx];
+        document.getElementById('track-title').textContent = t.title;
+        document.getElementById('track-sub').textContent = state.isPlaying ? `در حال پخش • ${t.artist}` : 'متوقف شده';
+        document.getElementById('icon-play').classList.toggle('hidden', state.isPlaying);
+        document.getElementById('icon-pause').classList.toggle('hidden', !state.isPlaying);
+        document.getElementById('music-eq').classList.toggle('playing', state.isPlaying);
+    }
+
+    document.getElementById('btn-play-pause').addEventListener('click', () => {
+        state.isPlaying = !state.isPlaying;
+        updateMusicUI();
+    });
+    document.getElementById('btn-next-track').addEventListener('click', () => {
+        state.trackIdx = (state.trackIdx + 1) % TRACKS.length;
+        state.isPlaying = true;
+        updateMusicUI();
+    });
+    document.getElementById('btn-prev-track').addEventListener('click', () => {
+        state.trackIdx = (state.trackIdx - 1 + TRACKS.length) % TRACKS.length;
+        state.isPlaying = true;
+        updateMusicUI();
+    });
+
+    // Swipe Gestures on Home Screen
+    let touchStartY = 0;
+    const homeEl = document.getElementById('home-screen');
+    homeEl.addEventListener('touchstart', e => {
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+    homeEl.addEventListener('touchend', e => {
+        const dy = e.changedTouches[0].clientY - touchStartY;
+        if (dy > 65) qsPanel.classList.add('open');
+        else if (dy < -65) drawerPanel.classList.add('open');
+    }, { passive: true });
+
+    // Status Bar & Drawer Open/Close Buttons
+    document.getElementById('status-bar').addEventListener('click', () => qsPanel.classList.add('open'));
+    document.getElementById('qs-close-btn').addEventListener('click', () => qsPanel.classList.remove('open'));
+    document.getElementById('qs-open-settings').addEventListener('click', () => {
+        qsPanel.classList.remove('open');
+        openMiniApp(BUILTIN_APPS.find(a => a.builtin === 'settings'));
+    });
+
+    document.getElementById('home-search-pill').addEventListener('click', () => {
+        drawerPanel.classList.add('open');
+        setTimeout(() => document.getElementById('drawer-search').focus(), 260);
+    });
+    document.getElementById('drawer-close-btn').addEventListener('click', () => drawerPanel.classList.remove('open'));
+
+    // Drawer Category Tabs & Instant Search
+    document.querySelectorAll('.cat-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            state.activeCat = tab.dataset.cat;
+            document.querySelectorAll('.cat-tab').forEach(t => {
+                const isActive = t === tab;
+                t.classList.toggle('active', isActive);
+                t.classList.toggle('bg-sky-500', isActive);
+                t.classList.toggle('text-white', isActive);
+                t.classList.toggle('font-bold', isActive);
+                t.classList.toggle('bg-white/10', !isActive);
+            });
+            renderDrawer();
+        });
+    });
+
+    document.getElementById('drawer-search').addEventListener('input', renderDrawer);
+
+    // =========================================================================
+    // 7. MINI-APPS (CALCULATOR, NOTES, CLOCK, LAUNCHER SETTINGS + CUSTOM FONT)
+    // =========================================================================
+    function closeMiniApp() {
+        miniAppView.classList.remove('open');
+        if (swInterval) {
+            clearInterval(swInterval);
+            swInterval = null;
+        }
+    }
+
+    document.getElementById('mini-app-close').addEventListener('click', closeMiniApp);
+    document.getElementById('mini-app-home-pill').addEventListener('click', closeMiniApp);
+
+    // Global Back-Button Handler for Android MainActivity.onBackPressed()
+    window.closeAllModals = function() {
+        drawerPanel.classList.remove('open');
+        qsPanel.classList.remove('open');
+        ctxMenu.classList.add('hidden');
+        document.getElementById('weather-forecast').classList.add('hidden');
+        closeMiniApp();
+    };
+
+    function openMiniApp(app) {
+        drawerPanel.classList.remove('open');
+        qsPanel.classList.remove('open');
+        document.getElementById('mini-app-title').textContent = app.name;
+        const iconWrap = document.getElementById('mini-app-icon');
+        iconWrap.className = `w-7 h-7 rounded-lg bg-gradient-to-br ${app.grad} text-white flex items-center justify-center`;
+        iconWrap.innerHTML = app.svg
+            ? `<svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">${app.svg}</svg>`
+            : `<span class="text-xs font-black">${app.monogram || '?'}</span>`;
+
+        miniAppBody.innerHTML = '';
+
+        const type = app.builtin || app.id;
+        if (type === 'calculator') buildCalculatorApp();
+        else if (type === 'notes') buildNotesApp();
+        else if (type === 'settings') buildSettingsApp();
+        else if (type === 'clock') buildClockApp();
+        else buildSimulatedApp(app);
+
+        miniAppView.classList.add('open');
+    }
+
+    // --- Mini-App 1: Calculator ---
+    function buildCalculatorApp() {
+        let expr = '';
+        miniAppBody.innerHTML = `
+            <div class="flex flex-col h-full justify-end gap-4">
+                <div class="rounded-3xl bg-current/10 p-5 text-left min-h-[110px] flex flex-col justify-end" dir="ltr">
+                    <div id="calc-expr" class="text-xs opacity-60 min-h-[18px] break-all"></div>
+                    <div id="calc-res" class="text-4xl font-extrabold mt-1 break-all">0</div>
+                </div>
+                <div class="grid grid-cols-4 gap-2.5" dir="ltr">
+                    ${['C','⌫','%','÷','7','8','9','×','4','5','6','-','1','2','3','+','00','0','.','='].map(k => {
+                        const isOp = ['÷','×','-','+','='].includes(k);
+                        const isFn = ['C','⌫','%'].includes(k);
+                        const cls = k === '=' ? 'bg-sky-500 text-white' : (isOp ? 'bg-sky-500/20 text-sky-400' : (isFn ? 'bg-rose-500/15 text-rose-400' : 'bg-current/10'));
+                        return `<button data-k="${k}" class="calc-btn h-14 rounded-2xl text-lg font-bold ${cls} active:scale-90 transition">${k}</button>`;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+        const exprEl = document.getElementById('calc-expr');
+        const resEl = document.getElementById('calc-res');
+
+        miniAppBody.querySelectorAll('.calc-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const k = btn.dataset.k;
+                if (k === 'C') {
+                    expr = '';
+                    exprEl.textContent = '';
+                    resEl.textContent = '0';
+                } else if (k === '⌫') {
+                    expr = expr.slice(0, -1);
+                    resEl.textContent = expr || '0';
+                } else if (k === '=') {
+                    try {
+                        const safeExpr = expr.replace(/×/g, '*').replace(/÷/g, '/').replace(/%/g, '/100');
+                        if (!/^[0-9+\-*/.() ]+$/.test(safeExpr)) throw new Error('invalid');
+                        const val = Function('"use strict"; return (' + safeExpr + ')')();
+                        exprEl.textContent = expr + ' =';
+                        expr = String(Number.isFinite(val) ? +val.toFixed(6) : 'خطا');
+                        resEl.textContent = expr;
+                    } catch (e) {
+                        resEl.textContent = 'خطا';
+                        expr = '';
+                    }
+                } else {
+                    expr += k;
+                    resEl.textContent = expr;
+                }
+            });
+        });
+    }
+
+    // --- Mini-App 2: Notes (Saved in localStorage) ---
+    function buildNotesApp() {
+        function renderNotesList() {
+            const listEl = document.getElementById('notes-list');
+            if (!state.notes.length) {
+                listEl.innerHTML = '<div class="text-center text-xs opacity-50 py-10">هنوز یادداشتی ثبت نشده است</div>';
+                return;
+            }
+            listEl.innerHTML = '';
+            state.notes.forEach((txt, idx) => {
+                const row = document.createElement('div');
+                row.className = 'rounded-2xl bg-current/10 p-3.5 flex items-start justify-between gap-3';
+                row.innerHTML = `
+                    <p class="text-xs leading-relaxed break-words flex-1">${txt.replace(/</g, '&lt;')}</p>
+                    <button class="text-xs text-rose-400 font-bold shrink-0 px-1.5 py-0.5">حذف</button>
+                `;
+                row.querySelector('button').addEventListener('click', () => {
+                    state.notes.splice(idx, 1);
+                    try { localStorage.setItem('onesmart_notes', JSON.stringify(state.notes)); } catch (e) {}
+                    renderNotesList();
+                });
+                listEl.appendChild(row);
+            });
+        }
+
+        miniAppBody.innerHTML = `
+            <div class="flex flex-col gap-4">
+                <div class="flex gap-2">
+                    <input id="note-input" type="text" placeholder="یادداشت جدید بنویسید..." class="flex-1 rounded-2xl bg-current/10 border border-current/15 px-3.5 py-2.5 text-xs outline-none focus:border-sky-400">
+                    <button id="note-add-btn" class="px-4 py-2.5 rounded-2xl bg-amber-500 text-white text-xs font-bold active:scale-95 transition">افزودن</button>
+                </div>
+                <div id="notes-list" class="flex flex-col gap-2.5"></div>
+            </div>
+        `;
+
+        const input = document.getElementById('note-input');
+        const addNote = () => {
+            const val = input.value.trim();
+            if (!val) return;
+            state.notes.unshift(val);
+            try { localStorage.setItem('onesmart_notes', JSON.stringify(state.notes)); } catch (e) {}
+            input.value = '';
+            renderNotesList();
+        };
+        document.getElementById('note-add-btn').addEventListener('click', addNote);
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') addNote(); });
+        renderNotesList();
+    }
+
+    // --- Mini-App 3: Launcher Customization Settings + Custom Font Manager ---
+    function buildSettingsApp() {
+        const bridgeStatus = isNativeAndroid
+            ? 'حالت بومی اندروید (متصل به AndroidBridge)'
+            : 'حالت پیش‌نمایش مرورگر';
+        const statusColor = isNativeAndroid ? 'text-emerald-400' : 'text-amber-400';
+        const activeFontLabel = state.customFontName ? state.customFontName : 'فونت پیش‌فرض (وزیرمتن)';
+
+        miniAppBody.innerHTML = `
+            <div class="flex flex-col gap-5 pb-4">
+                <!-- AndroidBridge Status -->
+                <div class="rounded-2xl bg-current/10 p-3.5 flex flex-col gap-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-xs opacity-70">وضعیت اتصال سیستم</span>
+                        <span class="text-[11px] font-bold ${statusColor} text-left">${bridgeStatus}</span>
+                    </div>
+                    <button id="btn-refresh-apps" class="w-full py-2 rounded-xl bg-sky-500/20 text-sky-400 text-xs font-bold active:scale-95 transition">بروزرسانی لیست برنامه‌ها (${toFa(APPS.length)} برنامه)</button>
+                </div>
+
+                <!-- NEW: Custom Font Manager -->
+                <div class="rounded-3xl bg-current/10 p-4 flex flex-col gap-3 border border-current/10">
+                    <div class="flex items-center justify-between gap-2">
+                        <h4 class="text-xs font-extrabold">مدیریت فونت دلخواه</h4>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 font-bold">TTF / OTF / WOFF2</span>
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs bg-current/5 rounded-xl px-3 py-2">
+                        <span class="opacity-70">فونت فعال:</span>
+                        <span id="active-font-name" class="font-bold text-sky-400 truncate max-w-[180px]" dir="auto">${activeFontLabel}</span>
+                    </div>
+
+                    <!-- Live Persian Font Preview Box -->
+                    <div class="rounded-2xl bg-current/5 border border-dashed border-current/20 p-3 text-center">
+                        <div class="text-[10px] opacity-60 mb-1">پیش‌نمایش زنده فونت</div>
+                        <div class="text-sm font-bold leading-relaxed">نمونه متن فارسی با فونت انتخابی - ۱۲۳۴۵۶۷۸۹۰</div>
+                    </div>
+
+                    <!-- Hidden File Input + Styled Upload & Reset Buttons -->
+                    <input id="custom-font-input" type="file" accept=".ttf,.otf,.woff,.woff2,font/*" class="hidden">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-upload-font" class="py-2.5 px-3 rounded-2xl bg-sky-500 text-white text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition shadow-md">
+                            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <span>انتخاب فایل فونت</span>
+                        </button>
+                        <button id="btn-reset-font" class="py-2.5 px-3 rounded-2xl bg-rose-500/15 text-rose-400 text-xs font-bold active:scale-95 transition ${state.customFontName ? '' : 'opacity-45'}">بازگشت به پیش‌فرض</button>
+                    </div>
+                </div>
+
+                <!-- Wallpaper Selector -->
+                <div>
+                    <h4 class="text-xs font-bold opacity-70 mb-2.5">تصویر زمینه</h4>
+                    <div class="grid grid-cols-5 gap-2">
+                        ${WALLPAPERS.map(w => `
+                            <button data-wp="${w.id}" class="wp-pick flex flex-col items-center gap-1">
+                                <div class="w-full aspect-[9/14] rounded-xl border-2 ${state.wallpaper === w.id ? 'border-sky-400 scale-105' : 'border-transparent'}" style="background:${w.preview}"></div>
+                                <span class="text-[10px] truncate w-full text-center">${w.name}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Icon Shape Selector -->
+                <div>
+                    <h4 class="text-xs font-bold opacity-70 mb-2.5">شکل آیکون‌ها</h4>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button data-rad="32%" class="rad-pick py-2.5 rounded-2xl text-xs font-bold ${state.iconRadius === '32%' ? 'bg-sky-500 text-white' : 'bg-current/10'}">اسکوئرکل One UI</button>
+                        <button data-rad="50%" class="rad-pick py-2.5 rounded-2xl text-xs font-bold ${state.iconRadius === '50%' ? 'bg-sky-500 text-white' : 'bg-current/10'}">دایره‌ای</button>
+                        <button data-rad="14%" class="rad-pick py-2.5 rounded-2xl text-xs font-bold ${state.iconRadius === '14%' ? 'bg-sky-500 text-white' : 'bg-current/10'}">مربعی</button>
+                    </div>
+                </div>
+
+                <!-- Icon Size Slider -->
+                <div>
+                    <div class="flex justify-between text-xs font-bold opacity-70 mb-2">
+                        <span>اندازه آیکون‌ها</span>
+                        <span id="size-lbl">${toFa(state.iconSize)}px</span>
+                    </div>
+                    <input id="icon-size-slider" type="range" min="48" max="64" value="${state.iconSize}" class="oneui-slider">
+                </div>
+
+                <!-- Dark / Light Theme Toggle -->
+                <div class="rounded-2xl bg-current/10 p-3.5 flex items-center justify-between">
+                    <span class="text-sm font-bold">پوسته شیشه‌ای تیره</span>
+                    <button id="settings-theme-toggle" class="px-4 py-1.5 rounded-full text-xs font-bold ${state.darkMode ? 'bg-sky-500 text-white' : 'bg-slate-400 text-slate-900'}">${state.darkMode ? 'فعال' : 'روشن'}</button>
+                </div>
+            </div>
+        `;
+
+        // Bind Refresh Apps
+        document.getElementById('btn-refresh-apps').addEventListener('click', () => {
+            loadApps();
+            renderHomeAndDock();
+            renderDrawer();
+            showToast('لیست برنامه‌ها بروزرسانی شد.');
+            buildSettingsApp();
+        });
+
+        // Bind Custom Font Upload & Reset
+        const fontInput = document.getElementById('custom-font-input');
+        document.getElementById('btn-upload-font').addEventListener('click', () => fontInput.click());
+        fontInput.addEventListener('change', e => {
+            const file = e.target.files && e.target.files[0];
+            if (file) handleCustomFontUpload(file, buildSettingsApp);
+            fontInput.value = '';
+        });
+        document.getElementById('btn-reset-font').addEventListener('click', () => {
+            resetCustomFont(buildSettingsApp);
+        });
+
+        // Bind Wallpaper Picker
+        miniAppBody.querySelectorAll('.wp-pick').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.wallpaper = btn.dataset.wp;
+                try { localStorage.setItem('onesmart_wp', state.wallpaper); } catch (e) {}
+                document.getElementById('wallpaper-layer').className = state.wallpaper;
+                buildSettingsApp();
+            });
+        });
+
+        // Bind Icon Shape Picker
+        miniAppBody.querySelectorAll('.rad-pick').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.iconRadius = btn.dataset.rad;
+                try { localStorage.setItem('onesmart_rad', state.iconRadius); } catch (e) {}
+                document.documentElement.style.setProperty('--icon-radius', state.iconRadius);
+                buildSettingsApp();
+            });
+        });
+
+        // Bind Icon Size Slider
+        document.getElementById('icon-size-slider').addEventListener('input', e => {
+            state.iconSize = Number(e.target.value);
+            try { localStorage.setItem('onesmart_size', String(state.iconSize)); } catch (e) {}
+            document.documentElement.style.setProperty('--icon-size', state.iconSize + 'px');
+            document.getElementById('size-lbl').textContent = toFa(state.iconSize) + 'px';
+        });
+
+        // Bind Dark/Light Toggle
+        document.getElementById('settings-theme-toggle').addEventListener('click', () => {
+            state.darkMode = !state.darkMode;
+            try { localStorage.setItem('onesmart_dark', String(state.darkMode)); } catch (e) {}
+            document.body.classList.toggle('light-theme', !state.darkMode);
+            const darkTile = document.querySelector('.qs-tile[data-toggle="dark"]');
+            if (darkTile) darkTile.classList.toggle('active', state.darkMode);
+            buildSettingsApp();
+        });
+    }
+
+    // --- Mini-App 4: Clock & Stopwatch ---
+    function buildClockApp() {
+        let ms = 0, running = false;
+        miniAppBody.innerHTML = `
+            <div class="flex flex-col items-center justify-center gap-6 py-8">
+                <div class="text-center">
+                    <div class="text-xs opacity-60 mb-1">ساعت فعلی تهران</div>
+                    <div id="mini-clock-live" class="text-5xl font-extrabold tracking-tight">۰۷:۴۹:۰۰</div>
+                </div>
+                <div class="w-full rounded-3xl bg-current/10 p-5 text-center">
+                    <div class="text-xs opacity-60 mb-2">کرنومتر</div>
+                    <div id="sw-disp" class="text-3xl font-mono font-bold mb-4" dir="ltr">00:00.0</div>
+                    <div class="flex justify-center gap-3">
+                        <button id="sw-start" class="px-6 py-2 rounded-full bg-sky-500 text-white text-xs font-bold active:scale-95 transition">شروع</button>
+                        <button id="sw-reset" class="px-5 py-2 rounded-full bg-current/15 text-xs font-bold active:scale-95 transition">ریست</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        updateClock();
+        const swDisp = document.getElementById('sw-disp');
+        const swStart = document.getElementById('sw-start');
+        swStart.addEventListener('click', () => {
+            running = !running;
+            swStart.textContent = running ? 'توقف' : 'ادامه';
+            if (running) {
+                swInterval = setInterval(() => {
+                    ms += 100;
+                    const s = Math.floor(ms / 1000);
+                    const m = Math.floor(s / 60);
+                    swDisp.textContent = `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}.${Math.floor((ms % 1000) / 100)}`;
+                }, 100);
+            } else {
+                clearInterval(swInterval);
+                swInterval = null;
+            }
+        });
+        document.getElementById('sw-reset').addEventListener('click', () => {
+            running = false;
+            clearInterval(swInterval);
+            swInterval = null;
+            ms = 0;
+            swDisp.textContent = '00:00.0';
+            swStart.textContent = 'شروع';
+        });
+    }
+
+    // --- Simulated Views for Browser Preview Demo Apps ---
+    function buildSimulatedApp(app) {
+        miniAppBody.innerHTML = `
+            <div class="h-full flex flex-col items-center justify-center text-center gap-4 py-10">
+                <div class="w-20 h-20 rounded-3xl bg-gradient-to-br ${app.grad} text-white flex items-center justify-center shadow-xl">
+                    ${app.svg
+                        ? `<svg class="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${app.svg}</svg>`
+                        : `<span class="text-3xl font-black">${app.monogram || '?'}</span>`
+                    }
+                </div>
+                <div>
+                    <h4 class="text-lg font-extrabold">${app.name}</h4>
+                    <p class="text-xs opacity-65 mt-1 max-w-[240px] leading-relaxed">نمای شبیه‌سازی‌شده برنامه ${app.name} در محیط پیش‌نمایش مرورگر. روی گوشی اندروید، برنامه واقعی باز می‌شود.</p>
+                </div>
+            </div>
+        `;
+    }
+
+    // =========================================================================
+    // 8. INITIALIZATION
+    // =========================================================================
+    document.getElementById('wallpaper-layer').className = state.wallpaper;
+    document.documentElement.style.setProperty('--icon-radius', state.iconRadius);
+    document.documentElement.style.setProperty('--icon-size', state.iconSize + 'px');
+    document.body.classList.toggle('light-theme', !state.darkMode);
+
+    const darkTile = document.querySelector('.qs-tile[data-toggle="dark"]');
+    if (darkTile) darkTile.classList.toggle('active', state.darkMode);
+
+    // Restore saved custom font if previously uploaded
+    if (state.customFontData) {
+        applyCustomFont(state.customFontData, state.customFontName);
+    }
+
+    loadApps();
+    renderHomeAndDock();
+    renderDrawer();
+    renderNotifications();
+    updateMusicUI();
+    updateClock();
+    setInterval(updateClock, 1000);
+})();
+</script>
+</body>
+</html>
